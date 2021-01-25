@@ -1,0 +1,8 @@
+# Hacking4Dummies
+git clone https://github.com/giddings32/Hacking4Dummies.git
+cd Hacking4Dummies
+chmod +x h4d
+echo $PATH
+pick a path from this location to move h4d file
+example: mv h4d /usr/local/games
+you can now use script by typing h4d from any directory
