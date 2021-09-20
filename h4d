@@ -246,7 +246,7 @@ while true; do
 			##         WPScan Back         ##
 			##-----------------------------##
 			elif [[ $wpScan == "2" ]]; then
-				break 2
+				break 
 						
 			##-----------------------------##
 			##         WPScan Exit         ##
@@ -379,7 +379,7 @@ while true; do
 						##-----------------------------##
 						elif [[ $hydra == "2" ]]; then
 
-							hydra2Options=$(echo -e "1.  Manual\n2.  Dirb List\n3.  Back" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
+							hydra2Options=$(echo -e "1.  Manual\n2.  Dirb List" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
 
 							##-----------------------------##
 							##      HTTP Basic Manual      ##
@@ -412,7 +412,7 @@ while true; do
 						##        Hydra Web Login      ##
 						##-----------------------------##
 						elif [[ $hydra == "4" ]]; then
-							hydra2Options=$(echo -e "1.  Manual\n2.  Dirb List\n3.  Back" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
+							hydra2Options=$(echo -e "1.  Manual\n2.  Dirb List" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
 						
 							##-----------------------------##
 							##    Web Login URL Manual     ##
@@ -431,7 +431,7 @@ while true; do
 							rname=$(echo "$url" | cut -d "/" -f 3);
 							fpath=$(echo "$url" | cut -d "/" -f 4-99);
 
-							formQuestion=$(echo -e "1.  Manual\n2.  From List\n3.  Back" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
+							formQuestion=$(echo -e "1.  Manual\n2.  From List" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Website?"| cut -d '.' -f 1)
 
 							##-----------------------------##
 							##    Web Login Form Manual    ##
@@ -445,10 +445,8 @@ while true; do
 							##      Web Login Form List    ##
 							##-----------------------------##
 							elif [[ "$formQuestion" == "2" ]]; then
-								wget -q http://vtcsec/secret/wp-login.php -O $scan/FormPage
-								cat $scan/FormPage | awk  -F 'name=' '{print $2}'| awk -F 'id=' '{print $1}' | sed 's/"//g' | sed '/^$/d' | awk 'NF==1' > $scan/fp
-
-								#cat $scan/FormPage | grep -B 5 "type=\"password\"" | awk  -F 'id=' '{print $2}' | awk -F 'class' '{print $1}' | sed 's/"//g' | sed '/^$/d' | sed 's/ //g' > $scan/fp
+								wget -q $url -O $scan/FormPage
+								cat $scan/FormPage | grep -oE 'name="[^"]+|value="[^"]+|id="[^"]+' | cut -d '"' -f '2' | sed '/^$/d' > $scan/fp
 								mv $scan/fp $scan/FormPage
 								usrForm=$(cat $scan/FormPage | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select the User Form ID used")
 								passForm=$(cat $scan/FormPage | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select the Password Form ID used")
@@ -456,12 +454,68 @@ while true; do
 
 							fi
 
+							submitQuestion=$(echo -e "1.  Manual\n2.  From List" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Submit Button Info?"| cut -d '.' -f 1)
+
+							##-----------------------------##
+							##    Web Login Submit Manual ##
+							##-----------------------------##
+							if [[ "$submitQuestion" == "1" ]]; then
+								submitName=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Submit Button Name");
+								submitValue=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Submit Button Value");
+
+
+							##-----------------------------##
+							##    Web Login Submit List   ##
+							##-----------------------------##
+							elif [[ "$submitQuestion" == "2" ]]; then
+								wget -q $url -O $scan/FormPage
+								cat $scan/FormPage | grep -oE 'name="[^"]+|value="[^"]+|id="[^"]+' | cut -d '"' -f '2' | sed '/^$/d' > $scan/fp
+								mv $scan/fp $scan/FormPage
+								submitName=$(cat $scan/FormPage | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select Submit Button Name")
+								submitValue=$(cat $scan/FormPage | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select Submit Button Value")
+								rm $scan/FormPage
+
+							fi
+
+							cookieQuestion=$(echo -e "1.  Manual\n2.  From List" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select Cookie Info?"| cut -d '.' -f 1)
+
+							##-----------------------------##
+							##    Web Login Cookie Manual  ##
+							##-----------------------------##
+							if [[ "$cookieQuestion" == "1" ]]; then
+								cookieName=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Submit Cookie Name");
+								cookieValue=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Enter Submit Cookie Value");
+
+
+							##-----------------------------##
+							##    Web Login Cookie List    ##
+							##-----------------------------##
+							elif [[ "$cookieQuestion" == "2" ]]; then
+								wget -q $url -O $scan/FormPage
+								cat $scan/FormPage | grep -oE 'name="[^"]+|value="[^"]+|id="[^"]+' | cut -d '"' -f '2' | sed '/^$/d' > $scan/fp
+								mv $scan/fp $scan/FormPage
+								cookieName=$(cat $scan/FormPage | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select Cookie Name")
+								cookieValue=$(cat $scan/FormPage | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select Cookie Value")
+								rm $scan/FormPage
+
+							fi
+
+
+
 
 							loginFail=$(echo "" | rofi -dmenu -async-pre-read 0  -font "Fira Code Medium 20" -theme DarkBlue -lines 1 -p "Login Fail Message");
+							
+							curl -v $url 2> curl.txt 1>/dev/null    
+							grep "Set-Cookie" curl.txt | cut -d ':' -f '2' | cut -d ';' -f '1' > set_cookie.txt
+							cookie=$(cat set_cookie.txt);
+							rm curl.txt
+							rm set_cookie.txt
+							
+							#curl -v --data '$usrForm=TestUser&$passForm=TestPass&$loginName=$loginValue&$cookieName=$cookieValue' --cookie '$cookie' $url
+							#echo -e "hydra $rname http-post-form /$fpath':$usrForm=^USER^&$passForm=^PASS^:$loginFail' -L $userlist -P $passlist -f -V\n"
+							hydra "$rname" http-post-form '/$fpath:$usrForm=^USER^&$passForm=^PASS^&$loginName=$loginValue&$cookieName=$cookieValue:$loginFail' -L "$userlist" -P "$passlist" -f -V
+							echo 'hydra "$rname" http-post-form "/$fpath:$usrForm=^USER^&$passForm=^PASS^&$loginName=$loginValue&$cookieName=$cookieValue:$loginFail" -L "$userlist" -P "$passlist" -f -V'
 
-
-							echo -e "hydra $rname http-post-form /$fpath':$usrForm=^USER^&$passForm=^PASS^:$loginFail' -L $userlist -P $passlist -f -V\n"
-							hydra "$rname" http-post-form '/$fpath:$usrForm=^USER^&$passForm=^PASS^&wp-submit=Log+In:$loginFail' -L "$userlist" -P "$passlist" -f -V
 
 						
 						##-----------------------------##
