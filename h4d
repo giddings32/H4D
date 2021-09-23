@@ -1,17 +1,26 @@
 #!/bin/bash
 
 while true; do
+
+	if [[ ! -f "./.h4dsaved" ]]; then
+		echo -e "lhost:\nrhost:\nrange:" > .h4dsaved
+
+	elif [[ -f "./.h4dsaved" ]]; then
+		myip=$(grep "lhost:" .h4dsaved | cut -d " " -f 2)
+		scan=$(grep "rhost:" .h4dsaved | cut -d " " -f 2)
+		range=$(grep "iprange:" .h4dsaved | cut -d " " -f 2)
+
+	fi
+
+
+
 	syntax=$(echo -e "1.  Select IP\n2.  Nmap\n3.  Dirb\n4.  WPScan\n5.  Password Cracking\n6.  SQLMap\n7.  Reverse Shell\n8.  Null Sessions\n9.  Exit" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "What Program are you interested in?"| cut -d '.' -f 1)
-
-
 
 ##---------------------------------------------------##
 ##                     Select IP                     ##
 ##---------------------------------------------------##
-
 	if [[ "$syntax" == "1" ]]; then
-		IPOptions=$(echo -e "1.  Manual\n2.  Interface\n3.  Back" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select IP Address?"| cut -d '.' -f 1)
-			
+		IPOptions=$(echo -e "1.  Manual\n2.  Interface\n3.  List" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "How do you want to select IP Address?"| cut -d '.' -f 1)		
 		##-----------------------------##
 		##     Select IP Manual        ##
 		##-----------------------------##
@@ -25,14 +34,27 @@ while true; do
 			interface=$(ifconfig | cut -d ":" -f 1 | cut -d " " -f 1 | sed '/^$/d' | grep -v 'lo' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which interface do you want to use?" )
 			myip=$(ifconfig "$interface" | grep -win 'inet' | cut -d " " -f 10)
 			range=$(ifconfig "$interface" | grep -win 'inet' | cut -d " " -f 10 | cut -d "." -f 1-3 | tr -d '\n' && echo ".0/24")
+			vr=$(ifconfig "$interface" | grep -win 'inet' | cut -d " " -f 10 | cut -d "." -f 1-3 | tr -d '\n' && echo ".1")	
+			sed -i "s/^lhost:.*$/lhost: $myip/g" ./.h4dsaved
+			sed -i "s|^range:.*$|range: $range|g" ./.h4dsaved
 			while true; do
-				whosup=$(nmap -sn -T5 -min-parallelism 100 "$range" | grep -v -E 'Host|done|Starting' | cut -d " " -f 5 | grep -vxF "$myip" | sed '/^$/d' )
+				whosup=$(nmap -sn -T5 -min-parallelism 100 "$range" | grep -v -E 'Host|done|Starting' | cut -d " " -f 5 | grep -vxF "$myip" | grep -vxF "$vr"| sed '/^$/d' )
+				echo $whosup > .iplist
 				scan=$(echo "$whosup" | tr " " "\n" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "What IP would you like to use?")
+				sed -i "s/^rhost:.*$/rhost: $scan/g" ./.h4dsaved
 				break
 			done
-		fi
-		
 
+		elif [[ "$IPOptions" == "3" ]]; then
+			while true; do
+				whosup=$(cat .iplist)
+				scan=$(echo "$whosup" | tr " " "\n" | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "What IP would you like to use?")
+				sed -i "s/^rhost:.*$/rhost: $scan/g" ./.h4dsaved
+				break
+			done
+	
+		fi
+	
 ##---------------------------------------------------##
 ##                     NMAP                          ##
 ##---------------------------------------------------##
@@ -45,82 +67,82 @@ while true; do
 			##     Nmap Stealth Scan       ##
 			##-----------------------------##
 			if [[ $nmapscan == "1" ]]; then
-				mkdir -p "$scan/NmapScans/StealthScan"
-				sudo nmap -T1 -sS -vv "$scan" -oX  "$scan/NmapScans/StealthScan/$scan.xml"
-				xsltproc "$scan/NmapScans/StealthScan/$scan.xml" -o "$scan/NmapScans/StealthScan/$scan.html"
-				rm -f "$scan/NmapScans/StealthScan/$scan.xml"
-				xdg-open "$scan/NmapScans/StealthScan/$scan.html" &
-				grep -B 3 -E "(http|https)" $scan/NmapScans/StealthScan/$scan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/http_ports.txt
-				sed -i 's/^80$//g' $scan/http_ports.txt
+				mkdir -p "$scan/NmapScans"
+				sudo nmap -T1 -sS -vv "$scan" -oX  "$scan/NmapScans/StealthScan.xml"
+				xsltproc "$scan/NmapScans/StealthScan.xml" -o "$scan/NmapScans/StealthScan.html"
+				rm -f "$scan/NmapScans/StealthScan.xml"
+				xdg-open "$scan/NmapScans/StealthScan.html" &
+				grep -B 3 -E "(http|https)" $scan/NmapScans/StealthScan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/.http_ports
+				sed -i 's/^80$//g' $scan/.http_ports
 				while read i;
 				do
 					xdg-open "http:$scan:$i" &
-				done <$scan/http_ports.txt
+				done <$scan/.http_ports
 
 			##-----------------------------##
 			##      Nmap Quick Scan        ##
 			##-----------------------------##
 			elif [[ $nmapscan == "2" ]]; then
-				mkdir -p "$scan/NmapScans/QuickScan"
-				nmap -sC -sV -T4 "$scan" -oX  "$scan/NmapScans/QuickScan/$scan.xml"
-				xsltproc "$scan/NmapScans/QuickScan/$scan.xml" -o "$scan/NmapScans/QuickScan/$scan.html"
-				rm -f "$scan/NmapScans/QuickScan/$scan.xml"
-				xdg-open "$scan/NmapScans/QuickScan/$scan.html" &
-				grep -B 3 -E "(http|https)" $scan/NmapScans/QuickScan/$scan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/http_ports.txt
-				sed -i 's/^80$//g' $scan/http_ports.txt
+				mkdir -p "$scan/NmapScans"
+				nmap -sC -sV -T4 "$scan" -oX  "$scan/NmapScans/QuickScan.xml"
+				xsltproc "$scan/NmapScans/QuickScan.xml" -o "$scan/NmapScans/QuickScan.html"
+				rm -f "$scan/NmapScans/QuickScan.xml"
+				xdg-open "$scan/NmapScans/QuickScan.html" &
+				grep -B 3 -E "(http|https)" $scan/NmapScans/QuickScan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/.http_ports
+				sed -i 's/^80$//g' $scan/.http_ports
 				while read i;
 				do
 					xdg-open "http:$scan:$i" &
-				done <$scan/http_ports.txt
+				done <$scan/.http_ports
 
 			##-----------------------------##
 			##       Nmap Full Scan        ##
 			##-----------------------------##
 			elif [[ $nmapscan == "3" ]]; then
-				mkdir -p "$scan/NmapScans/FullScan"
-				nmap -sC -sV -p- "$scan" -oX  "$scan/NmapScans/FullScan/$scan.xml"
-				xsltproc "$scan/NmapScans/FullScan/$scan.xml" -o "$scan/NmapScans/FullScan/$scan.html"
-				rm -f "$scan/NmapScans/FullScan/$scan.xml"
-				xdg-open "$scan/NmapScans/FullScan/$scan.html" &
-				grep -B 3 -E "(http|https)" $scan/NmapScans/FullScan/$scan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/http_ports.txt
-				sed -i 's/^80$//g' $scan/http_ports.txt
+				mkdir -p "$scan/NmapScans"
+				nmap -sC -sV -p- "$scan" -oX  "$scan/NmapScans/FullScan.xml"
+				xsltproc "$scan/NmapScans/FullScan.xml" -o "$scan/NmapScans/FullScan.html"
+				rm -f "$scan/NmapScans/FullScan.xml"
+				xdg-open "$scan/NmapScans/FullScan.html" &
+				grep -B 3 -E "(http|https)" $scan/NmapScans/FullScan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/.http_ports
+				sed -i 's/^80$//g' $scan/.http_ports
 				while read i;
 				do
 					xdg-open "http:$scan:$i" &
-				done <$scan/http_ports.txt
+				done <$scan/.http_ports
 
 			##-----------------------------##
 			##     Nmap Quick UDP Scan     ##
 			##-----------------------------##
 			elif [[ $nmapscan == "4" ]]; then
-				mkdir -p "$scan/NmapScans/QuickUDP"
-				sudo nmap -sU -sV -T4 "$scan" -oX  "$scan/NmapScans/QuickUDP/$scan.xml"
-				xsltproc "$scan/NmapScans/QuickUDP/$scan.xml" -o "$scan/NmapScans/QuickUDP/$scan.html"
-				rm -f "$scan/NmapScans/QuickUDP/$scan.xml"
-				xdg-open "$scan/NmapScans/QuickUDP/$scan.html" &
-				grep -B 3 -E "(http|https)" $scan/NmapScans/QuickUDP/$scan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/http_ports.txt
-				sed -i 's/^80$//g' $scan/http_ports.txt
+				mkdir -p "$scan/NmapScans"
+				sudo nmap -sU -sV -T4 "$scan" -oX  "$scan/NmapScans/QuickUDP.xml"
+				xsltproc "$scan/NmapScans/QuickUDP.xml" -o "$scan/NmapScans/QuickUDP.html"
+				rm -f "$scan/NmapScans/QuickUDP.xml"
+				xdg-open "$scan/NmapScans/QuickUDP.html" &
+				grep -B 3 -E "(http|https)" $scan/NmapScans/QuickUDP.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/.http_ports
+				sed -i 's/^80$//g' $scan/.http_ports
 				while read i;
 				do
 					xdg-open "http:$scan:$i" &
-				done <$scan/http_ports.txt
+				done <$scan/.http_ports
 
 			
 			##-----------------------------##
 			##       Nmap FullScan+        ##
 			##-----------------------------##
 			elif [[ $nmapscan == "5" ]]; then
-				mkdir -p "$scan/NmapScans/FullScan+"
-				nmap -sV -n -v -Pn -p- -T4 -A "$scan" -oX "$scan/NmapScans/FullScan+/$scan.xml"
-				xsltproc "$scan/NmapScans/FullScan+/$scan.xml" -o "$scan/NmapScans/FullScan+/$scan.html"
-				rm -f "$scan/NmapScans/FullScan+/$scan.xml"
-				xdg-open "$scan/NmapScans/FullScan+/$scan.html" &
-				grep -B 3 -E "(http|https)" $scan/NmapScans/FullScan+/$scan.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/http_ports.txt
-				sed -i 's/^80$//g' $scan/http_ports.txt
+				mkdir -p "$scan/NmapScans"
+				nmap -sV -n -v -Pn -p- -T4 -A "$scan" -oX "$scan/NmapScans/FullScan+.xml"
+				xsltproc "$scan/NmapScans/FullScan+.xml" -o "$scan/NmapScans/FullScan+.html"
+				rm -f "$scan/NmapScans/FullScan+.xml"
+				xdg-open "$scan/NmapScans/FullScan+.html" &
+				grep -B 3 -E "(http|https)" $scan/NmapScans/FullScan+.html | grep -B 1 "tcp" | cut -d ">" -f "2" | cut -d "<" -f "1" | grep -v "tcp" | grep -v "-" > $scan/.http_ports
+				sed -i 's/^80$//g' $scan/.http_ports
 				while read i;
 				do
 					xdg-open "http:$scan:$i" &
-				done <$scan/http_ports.txt
+				done <$scan/.http_ports
 
 			##-----------------------------##
 			##     Nmap Port Knocker       ##
@@ -167,7 +189,7 @@ while true; do
 				while read i;
 				do
 					dirb http://$scan:$i -w -o $scan/directory.txt
-				done <$scan/http_ports.txt
+				done <$scan/.http_ports
 				grep -e "+" -e "==>" $scan/directory.txt | awk -F 'http:' '{print $2}' > $scan/d.txt | mv $scan/d.txt $scan/directory.txt
 				sed -i 's/\/\//http:\/\//g' $scan/directory.txt 
 				sed -r -i -e 's/[(]CODE:.*[)]|SIZE:.*//g' $scan/directory.txt
@@ -181,7 +203,7 @@ while true; do
 				while read i;
 				do
 					dirb http://$scan:$i $dirlist -w -o $scan/directory.txt
-				done <$scan/http_ports.txt
+				done <$scan/.http_ports
 				grep -e "+" -e "==>" $scan/directory.txt | awk -F 'http:' '{print $2}' > $scan/d.txt | mv $scan/d.txt $scan/directory.txt
 				sed -i 's/\/\//http:\/\//g' $scan/directory.txt 
 				sed -r -i -e 's/[(]CODE:.*[)]|SIZE:.*//g' $scan/directory.txt
@@ -195,7 +217,7 @@ while true; do
 				while read i;
 				do
 					dirb http://$scan:$i $dirlist -w -X '.php,.old,.bak' -o $scan/directory.txt
-				done <$scan/http_ports.txt
+				done <$scan/.http_ports
 				grep -e "+" -e "==>" $scan/directory.txt | awk -F 'http:' '{print $2}' > $scan/d.txt | mv $scan/d.txt $scan/directory.txt
 				sed -i 's/\/\//http:\/\//g' $scan/directory.txt 
 				sed -r -i -e 's/[(]CODE:.*[)]|SIZE:.*//g' $scan/directory.txt
@@ -975,7 +997,7 @@ while true; do
 			##-------------------------------##
 			elif [[ $nullsession == "11" ]]; then
 				smbclient \\\\\\\\\\\\"$scan"\\\\\\WorkSharing -N
-	
+
 			##-------------------------------##
 			##       NullSessions Back       ##
 			##-------------------------------##
