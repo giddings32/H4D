@@ -33,7 +33,7 @@ while true; do
 		elif [[ "$IPOptions" == "2" ]]; then
 			interface=$(ifconfig | cut -d ":" -f 1 | cut -d " " -f 1 | sed '/^$/d' | grep -v 'lo' | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Which interface do you want to use?" )
 			myip=$(ifconfig "$interface" | grep -win 'inet' | cut -d " " -f 10)
-			range=$(ifconfig "$interface" | grep -win 'inet' | cut -d " " -f 10 | cut -d "." -f 1-3 | tr -d '\n' && echo ".0/24")
+			range=$(ip route | grep -v "default" | grep $interface | cut -d " " -f 1 | rofi -dmenu -async-pre-read 0 -theme DarkBlue -p "Select the CIDR IP" )
 			vr=$(ifconfig "$interface" | grep -win 'inet' | cut -d " " -f 10 | cut -d "." -f 1-3 | tr -d '\n' && echo ".1")	
 			sed -i "s/^lhost:.*$/lhost: $myip/g" ./.h4dsaved
 			sed -i "s|^range:.*$|range: $range|g" ./.h4dsaved
