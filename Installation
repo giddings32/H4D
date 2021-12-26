@@ -4,5 +4,5 @@ chmod +x h4d
 echo $PATH
 pick a path from this location to move h4d file
 example: mv h4d /usr/local/games
-sudo apt-git update
+sudo apt-get update
 sudo apt install rofi
